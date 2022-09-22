@@ -1,0 +1,1 @@
+add_executable(test ConsoleApplication1.cpp)
