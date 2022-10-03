@@ -9,8 +9,8 @@
 class QueueP {
 public:
 	QueueP() {
-		head = nullptr;
-		tail = nullptr;
+		std::unique_ptr<Node> head{ nullptr };
+		std::unique_ptr<Node> tail{ nullptr };
 	};
 	QueueP(const QueueP& copy);
 	~QueueP();
@@ -20,19 +20,17 @@ public:
 	const int& top() const;
 	bool isEmpty() const;
 
-
 private:
 	struct Node {
 		int value;
-		Node* pNext;
+		std::unique_ptr<Node> pNext{ nullptr };
 		Node(int value_)
 		{
 			this->value = value_;
-			this->pNext = nullptr;
 		}
 	};
-	Node* head = nullptr;
-	Node* tail = head;
+	std::unique_ptr<Node> head{ nullptr }; 
+	std::unique_ptr<Node> tail{ nullptr };
 };
 
 #endif QUEUEP
