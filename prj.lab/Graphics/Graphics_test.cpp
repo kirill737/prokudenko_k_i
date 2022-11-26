@@ -7,13 +7,13 @@
 #include <unordered_set>
 #include <matplot/matplot.h>
 #include <set>
+#include <clocale>
 
-void gen_data(std::string fname, int n, int mx) {
+void gen_data(std::string fname, int n) {
     std::ofstream fout;
     fout.open(fname);
-
     fout << n << std::endl;
-    for (int i = 0; i < n; i++) fout << rand() % mx << " ";
+    for (int i = 0; i < n; i++) fout << rand() % n<< " ";
     fout.close();
 }
 
@@ -39,14 +39,14 @@ void read_2(int& n, std::vector<int>& data, std::ifstream& fin) {
 }
 void calc_2(int& n, std::vector<int>& data) {
     std::unordered_set<int> unique;
-        unique.reserve(200001);
-        int idx_unique = n;
-        for (int i = n - 1; 0 <= i; i -= 1) {
-            if (unique.find(data[i]) != unique.end()) {
-                idx_unique = data[i];
-                unique.insert(idx_unique);
-            }
+    unique.reserve(200000);
+    int idx_unique = n;
+    for (int i = n - 1; 0 <= i; i -= 1) {
+        if (!unique.contains(data[i])) {
+            idx_unique = data[i];
+            unique.insert(idx_unique);
         }
+    }
 }
 
 std::pair<double, double> time_test(
@@ -77,56 +77,109 @@ std::pair<double, double> time_test(
     return pair;
 }
 
+std::vector<int> N {16, 160, 1600, 3200, 6400, 12800, 16000,
+19200, 22400, 25600, 28800, 32000, 35200, 38400, 41600, 44800, 48000,
+51200, 54400, 57600, 60800, 64000, 67200, 70400, 73600, 76800, 80000,
+83200, 86400, 89600, 92800, 96000, 99200, 102400, 105600, 108800, 112000,
+115200, 118400, 121600, 124800, 128000, 131200, 134400, 137600, 140800,
+144000, 147200, 150400, 153600, 156800, 160000, 163200, 166400, 169600,
+172800, 176000, 179200, 182400, 185600, 188800, 192000, 195200, 198400};
+//std::vector<int> N{ 16 };
+
 int main() {
     using namespace matplot;
-    std::string all_data_path = "I:/OOP Kirl/prokudenko_k_i/prj.lab/Graphics/text.md";
-    gen_data("I:/OOP Kirl/prokudenko_k_i/prj.lab/Graphics/text.md", 10, 1000);
-    std::pair<double, double> pairt;
-    pairt = time_test("I:/OOP Kirl/prokudenko_k_i/prj.lab/Graphics/text.md", read_1, calc_1);
-    std::cout << pairt.first << " " << pairt.second;
+    setlocale(LC_CTYPE, "rus");
+    
+    std::string gen_data_path = "gen_files/gen_data.txt";
+  
+    std::vector<double> calc1;
+    std::vector<double> calc2;
+    std::vector<double> read1;
+    std::vector<double> read2;
 
-    //std::map<int, std::vector<double>> plot_n;
-    std::map<int, std::vector<double>> plot1;
-    std::map<int, std::vector<double>> plot2;
+    for (int n : N) {
 
-    for (int n = 1; n < 100; n += 1) {
-        std::cout << n << std::endl;
-        /*for (int m = 100; m <= 1000000; m *=10) {*/
-        int m = 1000000;
-            gen_data(all_data_path, n, m);
+        gen_data(gen_data_path, n);
 
-            std::pair<double, double> time1 = time_test(all_data_path, read_1, calc_1);
-            std::pair<double, double> time2 = time_test(all_data_path, read_2, calc_2);
+        std::ifstream fin1;
+        fin1.open("data1.txt");
 
-             std::cout << n << " " << m << std::endl;
+        std::ifstream fin2;
+        fin2.open("data1.txt");
 
-            plot1[m].push_back(time1.first / n);
-            plot2[m].push_back(time2.second / n);
-            //plot_n[m].push_back(n);
+        std::ios_base::sync_with_stdio(0);
+        fin1.tie(nullptr);
 
-            std::cout << time1.first << " " << time1.second << std::endl;
-            std::cout << time2.first << " " << time2.second << std::endl;
+        std::ios_base::sync_with_stdio(0);
+        fin2.tie(nullptr);
 
-        //}
+        std::vector<int> input1(200001, -1);
+        std::vector<int> input2(200001, -1);
+
+        std::pair<double, double> time1 = time_test(gen_data_path, read_1, calc_1);
+        std::pair<double, double> time2 = time_test(gen_data_path, read_2, calc_2);
+
+        //std::cout << n << std::endl;
+
+        fin1.close();
+        fin2.close();
+
+        read1.push_back(time1.first);
+        read2.push_back(time2.first);
+        calc1.push_back(time1.second);
+        calc2.push_back(time2.second);
     }
 
-    std::string path = "C:/Users/swag_/Desktop/prokudenko_k_i.md";
-    std::ofstream fon_md;
-    fon_md.open(path);
+    std::vector<double> x = linspace(16, 200000, 64);
 
-    fon_md << "# **���������� ������ ���-21-3** \n" << "## ������ 2 �������� \n";
-    fon_md << "# ���������� ������ ���-21-3 \n";
-    fon_md << "  �� �������� �����, ��� ������ ��������� �������� ��������� �� ����� ����������� �����. �� �� ������� ����� ������ ��� ������� ���������� ����� ����������, �� 2 ��� �� ��� ���������.";
+    plot(x, calc1, x, calc2);
+    xlabel("n");
+    ylabel("t_{обработки}");
+    save("gen_files/img/plot_calc.png");
 
-    fon_md.close();
+    plot(x, read1, x, read2);
+    xlabel("n");
+    ylabel("t_{чтения}");
+    save("gen_files/img/plot_read.png");
 
 
-    std::vector<std::vector<double>> v {plot1[1000000], plot2[1000000]};
-    plot(v);
-    /*save("img/v.jpg");*/
-    show();
-    
-    fon_md.close();
+    std::string path = "gen_files/current_try.tex";
 
+    std::ofstream fon_tex;
+    fon_tex.open(path);
+
+    fon_tex << "\\documentclass[12pt]{article}" << "\n";
+    fon_tex << "\\usepackage[utf8x]{inputenc}" << "\n";
+    fon_tex << "\\usepackage[english,russian]{babel}" << "\n";
+    fon_tex << "\\usepackage{cmap}" << "\n"; 
+    fon_tex << "\\usepackage[T2A]{ fontenc }" << "\n";
+    fon_tex << "\\usepackage{graphicx}" << "\n";
+    fon_tex << "\\usepackage{grffile}" << "\n";
+    fon_tex << "\\graphicspath{{img/}}" << "\n";
+    fon_tex << "\\title{Отчёт}" << "\n";
+    fon_tex << "\\author{Прокуденко Кирилл БПМ-21-3}" << "\n";
+    fon_tex << "\\begin{document}" << "\n";
+    fon_tex << "\\maketitle" << "\n";
+    fon_tex << "\\textbf{Github:} \\href{https://github.com/kirill737/prokudenko\\_k\\_i}" << "\n";
+    fon_tex << "\\section{Логика программы}" << "\n";
+    fon_tex << "Программа генерирует 2 графика, t чтения от n и t обработки от n. Значения n берутся из вектора N с изначальными тестовыми данными." << "\n";
+    fon_tex << "\\section{Анализ графиков} " << "\n";
+    fon_tex << "Синий график - первый код, оранжевый - второй код. " << "\n";
+    fon_tex << "\\begin{center}" << "\n";
+    fon_tex << "\\includegraphics[width=300pt]{plot_read.png} " << "\n";
+    fon_tex << "\\end{center}" << "\n";
+    fon_tex << "Из графика выше видно, что время чтения программ совпадает. Это соответствует логике, т.к. код считывания в программах идентичный." << "\n";
+    fon_tex << "\\begin{center}" << "\n";
+    fon_tex << "\\includegraphics[width=300pt]{plot_calc.png}" << "\n";
+    fon_tex << "\\end{center}" << "\n";
+    fon_tex << "Из графика считывания данных видно, что время обрабатывания данных первой программы растёт, но медленно. В то время как вторая программа тратит больше времени и растёт быстрее." << "\n";
+    fon_tex << "\\section{Итог} " << "\n";
+    fon_tex << "Как видно из замеров, первая программа работает гараздо быстрее чем вторая." << "\n";
+    fon_tex << "\\end{document}" << "\n";
+
+
+    fon_tex.close();
+
+    std::cout << "the end" << std::endl;
     return 0;
 }
